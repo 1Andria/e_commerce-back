@@ -1,7 +1,6 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
 import { InjectModel } from '@nestjs/mongoose';
 import { Model } from 'mongoose';
-import { CreateUserDto } from 'src/users/dto/create-user.dto';
 import * as bcrypt from 'bcrypt';
 import { JwtService } from '@nestjs/jwt';
 import { User } from 'src/users/schema/user.schema';
@@ -51,5 +50,44 @@ export class AuthService {
   async getCurrentUser(userId: string) {
     const user = await this.userModel.findById(userId);
     return user;
+  }
+
+  async clearCart(userId: string) {
+    await this.userModel.findByIdAndUpdate(userId, { selectedProducts: [] });
+    return 'cleared';
+  }
+
+  async increaseProductQuantity(userId: string, productId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new BadRequestException('user not found');
+    }
+    const selected = user.selectedProducts;
+
+    const index = selected.findIndex(
+      (el) => el.product.toString() === productId,
+    );
+    if (index !== -1) {
+      selected[index].quantity += 1;
+      await user.save();
+    }
+
+    return user.selectedProducts;
+  }
+
+  async decreaseProductQuantity(userId: string, productId: string) {
+    const user = await this.userModel.findById(userId);
+    if (!user) {
+      throw new BadRequestException('user not found');
+    }
+    const selected = user.selectedProducts;
+
+    const index = selected.findIndex((p) => p.product.toString() === productId);
+    if (index !== -1 && selected[index].quantity > 1) {
+      selected[index].quantity -= 1;
+      await user.save();
+    }
+
+    return user.selectedProducts;
   }
 }

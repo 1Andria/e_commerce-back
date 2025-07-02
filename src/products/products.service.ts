@@ -6,7 +6,7 @@ import {
 import { CreateProductDto } from './dto/create-product.dto';
 import { UpdateProductDto } from './dto/update-product.dto';
 import { User } from 'src/users/schema/user.schema';
-import { isValidObjectId, Model } from 'mongoose';
+import mongoose, { isValidObjectId, Model } from 'mongoose';
 import { InjectModel } from '@nestjs/mongoose';
 import { Product } from './schema/product.schema';
 import { CloudinaryService } from 'src/cloudinary/cloudinary.service';
@@ -43,6 +43,15 @@ export class ProductsService {
       images.map((file) => this.cloudinaryService.uploadImage(file)),
     );
 
+    const defaultBoxItems = [
+      { item: 'Charging Cable', quantity: 1 },
+      { item: 'User Manual', quantity: 1 },
+      { item: 'Cleaning Kit', quantity: 1 },
+    ];
+
+    const finalInTheBox =
+      inTheBox && inTheBox.length > 0 ? inTheBox : defaultBoxItems;
+
     const mainImage = {
       url: uploaded[0].secure_url,
       publicId: uploaded[0].public_id,
@@ -57,7 +66,7 @@ export class ProductsService {
       category,
       description,
       features,
-      inTheBox,
+      inTheBox: finalInTheBox,
       price,
       title,
       src: mainImage.url,
@@ -74,8 +83,9 @@ export class ProductsService {
     return { success: 'ok', data: newProduct };
   }
 
-  async findAll() {
-    const products = await this.productModel.find();
+  async findAll(category?: string) {
+    const filter = category ? { category } : {};
+    const products = await this.productModel.find(filter);
     return products;
   }
 
@@ -136,6 +146,43 @@ export class ProductsService {
     return {
       message: 'Product deleted successfully',
       deletedProductId: deletedProduct,
+    };
+  }
+
+  async selectProduct(userId: string, productId: string, quantity: number = 1) {
+    if (!isValidObjectId(productId)) {
+      throw new BadRequestException('Product not found');
+    }
+    const product = await this.productModel.findById(productId);
+    if (!product) {
+      throw new BadRequestException('Product not found');
+    }
+
+    const existUser = await this.userModel.findById(userId);
+    if (!existUser) {
+      throw new BadRequestException('User not found');
+    }
+
+    const objectId = new mongoose.Types.ObjectId(productId);
+
+    const existingIndex = existUser.selectedProducts.findIndex(
+      (p) => p.product.toString() === productId,
+    );
+
+    if (existingIndex !== -1) {
+      existUser.selectedProducts[existingIndex].quantity += quantity;
+    } else {
+      existUser.selectedProducts.push({
+        product: objectId,
+        quantity,
+      });
+    }
+
+    await existUser.save();
+
+    return {
+      message: 'Product selected successfully',
+      selectedProducts: existUser.selectedProducts,
     };
   }
 }

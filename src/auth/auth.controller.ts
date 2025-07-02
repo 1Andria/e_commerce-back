@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Patch, Post, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { signUpDto } from './dto/sign-up.dto';
 import { SignInDto } from './dto/sign-in.dto';
@@ -23,5 +23,28 @@ export class AuthController {
   @UseGuards(IsAuthGuard)
   getCurrentUser(@UserId() userId) {
     return this.authService.getCurrentUser(userId);
+  }
+  @Patch('clear-cart')
+  @UseGuards(IsAuthGuard)
+  clearCart(@UserId() userId) {
+    return this.authService.clearCart(userId);
+  }
+
+  @Patch('cart/increase')
+  @UseGuards(IsAuthGuard)
+  increaseQuantity(
+    @UserId() userId: string,
+    @Body('productId') productId: string,
+  ) {
+    return this.authService.increaseProductQuantity(userId, productId);
+  }
+
+  @Patch('cart/decrease')
+  @UseGuards(IsAuthGuard)
+  decreaseQuantity(
+    @UserId() userId: string,
+    @Body('productId') productId: string,
+  ) {
+    return this.authService.decreaseProductQuantity(userId, productId);
   }
 }

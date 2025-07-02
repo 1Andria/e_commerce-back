@@ -41,7 +41,16 @@ export class CreateProductDto {
   @IsString()
   features: string;
 
-  @IsOptional()
+  @Transform(({ value }) => {
+    if (typeof value === 'string') {
+      try {
+        return JSON.parse(value);
+      } catch {
+        return [];
+      }
+    }
+    return value;
+  })
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => BoxItemDto)

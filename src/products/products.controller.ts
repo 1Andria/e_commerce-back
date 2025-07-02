@@ -9,6 +9,7 @@ import {
   UseGuards,
   UseInterceptors,
   UploadedFiles,
+  Query,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
 import { CreateProductDto } from './dto/create-product.dto';
@@ -35,10 +36,9 @@ export class ProductsController {
   ) {
     return this.productsService.create(createProductDto, userId, images);
   }
-
   @Get()
-  findAll() {
-    return this.productsService.findAll();
+  findAll(@Query('category') category?: string) {
+    return this.productsService.findAll(category);
   }
 
   @Get(':id')
@@ -55,5 +55,15 @@ export class ProductsController {
   @UseGuards(IsAuthGuard)
   remove(@UserId() userId, @Param('id') id: string) {
     return this.productsService.remove(id, userId);
+  }
+
+  @Post('select-product')
+  @UseGuards(IsAuthGuard)
+  selectProduct(
+    @UserId() userId: string,
+    @Body('productId') productId: string,
+    @Body('quantity') quantity: number = 1,
+  ) {
+    return this.productsService.selectProduct(userId, productId, quantity);
   }
 }

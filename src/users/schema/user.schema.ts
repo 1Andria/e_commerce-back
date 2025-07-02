@@ -27,11 +27,18 @@ export class User {
   products: mongoose.Types.ObjectId[];
 
   @Prop({
-    type: [mongoose.Types.ObjectId],
+    type: [
+      {
+        product: { type: mongoose.Schema.Types.ObjectId, ref: 'product' },
+        quantity: { type: Number, default: 1 },
+      },
+    ],
     default: [],
-    ref: 'product',
   })
-  selectedProducts: mongoose.Types.ObjectId[];
+  selectedProducts: {
+    product: mongoose.Types.ObjectId;
+    quantity: number;
+  }[];
 }
 
 export const userSchema = SchemaFactory.createForClass(User);

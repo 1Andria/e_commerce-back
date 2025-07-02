@@ -85,7 +85,7 @@ export class ProductsService {
 
   async findAll(category?: string) {
     const filter = category ? { category } : {};
-    const products = await this.productModel.find(filter);
+    const products = await this.productModel.find(filter).sort({ _id: -1 });
     return products;
   }
 
